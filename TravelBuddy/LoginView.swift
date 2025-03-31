@@ -76,7 +76,7 @@ struct LoginView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationDestination(for: String.self) { destination in
             if destination == "LandingView" {
-                LandingView(path: $path)
+                LandingView(path: $path, items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
             }
         }
     }

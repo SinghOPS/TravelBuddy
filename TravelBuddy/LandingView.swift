@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct LandingView: View {
+    @Environment(\.modelContext) private var modelContext
     @Binding var path: NavigationPath
+    var items: [Trip]
     var prefilledTripLocations: [String] = ["New York", "Paris", "Rome", "Tokyo", "Barcelona"]
     var body: some View {
         VStack {
@@ -72,24 +74,30 @@ struct LandingView: View {
             }
             
             VStack {
+                ForEach(items.prefix(3), id: \.self) { item in
+                    NavigationLink(destination: TripDetailView(trip: item)) {
+                        TripRowView(trip: item)
+                    }
+                }
+            }
+            
+            
+            NavigationLink(destination: HistoryView(path: $path, items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])) {
+                Text("See All>")
+                    .font(.title2)
+                    .fontWeight(.heavy)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(width: 300, height: 50)
+                    .background(Color.black)
+                    .cornerRadius(10)
+                    .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 2) // Optional: Adds shadow for aesthetics
                 
             }
-            
-            Button(action: {print("See all trips!")}) {
-                Text("See All>")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-            }
-            .frame(width: 300, height: 50)
-            .background(Color.black)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .padding()
-            
         }
     }
 }
 
 #Preview {
-    LandingView(path: .constant(NavigationPath()))
+    LandingView(path: .constant(NavigationPath()), items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
 }

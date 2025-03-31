@@ -10,21 +10,20 @@ import SwiftData
 
 struct HistoryView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Binding var path: NavigationPath
+    var items: [Trip]
     
     var body: some View {
-        NavigationSplitView {
-            Text("Project update testing!")
+        NavigationView {
             List {
                 ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                    NavigationLink(destination: TripDetailView(trip: item)) {
+                        TripRowView(trip: item)
                     }
                 }
                 .onDelete(perform: deleteItems)
             }
+            .listStyle(InsetGroupedListStyle())
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
@@ -35,14 +34,14 @@ struct HistoryView: View {
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
+            .navigationTitle("Recent Trips")
         }
     }
+
     private func addItem() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+//            let newItem = Item(timestamp: Date())
+//            modelContext.insert(newItem)
         }
     }
 
@@ -56,6 +55,5 @@ struct HistoryView: View {
 }
 
 #Preview {
-    HistoryView()
-        .modelContainer(for: Item.self, inMemory: true)
+    HistoryView(path: .constant(NavigationPath()),items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
 }
