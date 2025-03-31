@@ -14,12 +14,14 @@ final class Trip {
     var StartDate: Date
     var EndDate: Date
     var totalSavings: Double
+    var image: String
     
-    init(Destination: String, StartDate: Date, EndDate: Date, totalSavings: Double) {
+    init(Destination: String, StartDate: Date, EndDate: Date, totalSavings: Double, image: String) {
         self.Destination = Destination
         self.StartDate = StartDate
         self.EndDate = EndDate
         self.totalSavings = totalSavings
+        self.image = image
     }
     
 }
