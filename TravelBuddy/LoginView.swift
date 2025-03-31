@@ -14,11 +14,11 @@ struct LoginView: View {
     
     
     var body: some View {
-        VStack{
+        VStack(spacing: 100){
             
             Image("logo")
                 .resizable()
-                .frame(width: .infinity, height: 250)
+                .frame(width: 300, height: 130)
             
                 
             VStack(spacing: 25) {
@@ -53,7 +53,7 @@ struct LoginView: View {
                 
                 Button(action: {
                     print("Login Clicked")
-                    path.append("")
+                    path.append("LandingView")
                 }) {
                     Text("Login")
                         .font(.title2)
@@ -74,6 +74,11 @@ struct LoginView: View {
             
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationDestination(for: String.self) { destination in
+            if destination == "LandingView" {
+                LandingView(path: $path)
+            }
+        }
     }
 }
 
