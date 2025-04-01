@@ -21,7 +21,7 @@ struct HistoryView: View {
                         TripRowView(trip: item)
                     }
                 }
-                .onDelete(perform: deleteItems)
+                //.onDelete(perform: deleteItems)
             }
             .listStyle(InsetGroupedListStyle())
             .toolbar {
@@ -29,7 +29,7 @@ struct HistoryView: View {
                     EditButton()
                 }
                 ToolbarItem {
-                    Button(action: addItem) {
+                    Button(action: {}) {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
@@ -47,9 +47,9 @@ struct HistoryView: View {
 
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+            //for index in offsets {
+              //  modelContext.delete(items[index])
+            //}
         }
     }
 }
