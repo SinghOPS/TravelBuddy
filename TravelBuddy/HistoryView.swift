@@ -11,16 +11,16 @@ import SwiftData
 struct HistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var path: NavigationPath
-    var items: [Trip]
+    var items: [TripInput]
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(items) { item in
+                /*ForEach(items) { item in
                     NavigationLink(destination: TripDetailView(trip: item)) {
                         TripRowView(trip: item)
                     }
-                }
+                }*/
                 //.onDelete(perform: deleteItems)
             }
             .listStyle(InsetGroupedListStyle())
@@ -54,6 +54,6 @@ struct HistoryView: View {
     }
 }
 
-#Preview {
+/*#Preview {
     HistoryView(path: .constant(NavigationPath()),items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
-}
+}*/

@@ -10,7 +10,7 @@ import SwiftUI
 struct LandingView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var path: NavigationPath
-    var items: [Trip]
+    var items: [TripInput]
     var prefilledTripLocations: [String] = ["New York", "Paris", "Rome", "Tokyo", "Barcelona"]
     var body: some View {
         VStack {
@@ -29,7 +29,7 @@ struct LandingView: View {
             ScrollView(.horizontal) {
                 HStack {
                     ForEach(prefilledTripLocations, id: \.self) { location in
-                        NavigationLink(destination: TripFormView(path: $path, destination: location)) {
+                        NavigationLink(destination: TripFormView(path: $path, destination: .constant(location))) {
                             VStack {
                             
                                 Image(location)
@@ -52,7 +52,7 @@ struct LandingView: View {
                     }
                 }
             }
-            NavigationLink(destination: TripFormView(path: $path, destination: "")) {
+            NavigationLink(destination: TripFormView(path: $path, destination: .constant(""))) {
                 Text("Plan a New Trip")
                     .font(.title2)
                     .fontWeight(.heavy)
@@ -61,7 +61,7 @@ struct LandingView: View {
                     .frame(width: 300, height: 50)
                     .background(Color.blue)
                     .cornerRadius(10)
-                    .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 2) // Optional: Adds shadow for aesthetics
+                    .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 2)
             }
 
             
@@ -73,16 +73,35 @@ struct LandingView: View {
                 Spacer()
             }
             
-            VStack {
+            /*VStack {
                 ForEach(items.prefix(3), id: \.self) { item in
                     NavigationLink(destination: TripDetailView(trip: item)) {
                         TripRowView(trip: item)
                     }
                 }
-            }
+            }*/
             
             
-            NavigationLink(destination: HistoryView(path: $path, items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])) {
+            NavigationLink(destination: HistoryView(path: $path, items: [TripInput(
+                origin: "Phoenix",
+                destination: "Maldives",
+                startDate: "Today", // Or use DateFormatter to convert Date to String
+                endDate: "Tomorrow",
+                travelerCount: 2, // Added default value
+                budgetLevel: "Medium", // Added default value
+                transportType: "Plane", // Added default value
+                additionalInfo: "" // Empty by default
+            ),
+            TripInput(
+                origin: "Phoenix",
+                destination: "New York",
+                startDate: "Today",
+                endDate: "Tomorrow",
+                travelerCount: 2,
+                budgetLevel: "Medium",
+                transportType: "Plane",
+                additionalInfo: ""
+            )])) {
                 Text("See All>")
                     .font(.title2)
                     .fontWeight(.heavy)
@@ -99,5 +118,24 @@ struct LandingView: View {
 }
 
 #Preview {
-    LandingView(path: .constant(NavigationPath()), items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
+    LandingView(path: .constant(NavigationPath()), items: [TripInput(
+        origin: "Phoenix",
+        destination: "Maldives",
+        startDate: "Today", // Or use DateFormatter to convert Date to String
+        endDate: "Tomorrow",
+        travelerCount: 2, // Added default value
+        budgetLevel: "Medium", // Added default value
+        transportType: "Plane", // Added default value
+        additionalInfo: "" // Empty by default
+    ),
+    TripInput(
+        origin: "Phoenix",
+        destination: "New York",
+        startDate: "Today",
+        endDate: "Tomorrow",
+        travelerCount: 2,
+        budgetLevel: "Medium",
+        transportType: "Plane",
+        additionalInfo: ""
+    )])
 }
