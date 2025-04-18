@@ -445,7 +445,8 @@ class TripPlannerViewModel: ObservableObject {
     }
 
 
-struct TripInput: Codable {
+struct TripInput: Codable, Identifiable {
+    let id = UUID() // Add this for Firestore document IDs
     let origin: String
     let destination: String
     let startDate: String

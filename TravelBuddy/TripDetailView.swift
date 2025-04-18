@@ -12,6 +12,8 @@ struct TripDetailView: View {
     @ObservedObject var viewModel: TripPlannerViewModel
     let travelInput: TripInput
     @State private var showErrorAlert = false
+    @State private var showSaveSuccess = false
+    @EnvironmentObject var tripDataService: TripDataService
     
     var body: some View {
         NavigationStack {

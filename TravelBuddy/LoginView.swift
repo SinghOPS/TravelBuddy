@@ -11,25 +11,26 @@ struct LoginView: View {
     @Binding var path: NavigationPath
     @State private var username: String = ""
     @State private var password: String = ""
-    
+    @State private var isSignUp = false
+    @State private var confirmPassword = ""
+    @EnvironmentObject var authService: AuthService
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     var body: some View {
-        VStack(spacing: 100){
-            
+        VStack(spacing: 100) {
             Image("logo")
                 .resizable()
                 .frame(width: 300, height: 130)
             
-                
             VStack(spacing: 25) {
-                
-                Text("User Login")
+                Text(isSignUp ? "Create Account" : "User Login")
                     .font(.largeTitle)
                     .fontWeight(.heavy)
                 
                 TextField("", text: $username)
                     .placeholder(when: username.isEmpty) {
-                        Text("Enter Username")
+                        Text("Email Address")
                     }
                     .foregroundStyle(.white)
                     .padding(10)
@@ -38,10 +39,12 @@ struct LoginView: View {
                     .background(Color.blue.opacity(0.7))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .frame(width: 300)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
                 
-                TextField("", text: $password)
+                SecureField("", text: $password)
                     .placeholder(when: password.isEmpty) {
-                        Text("Enter Password")
+                        Text("Password")
                     }
                     .foregroundStyle(.white)
                     .font(.title2)
@@ -51,11 +54,22 @@ struct LoginView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .frame(width: 300)
                 
-                Button(action: {
-                    print("Login Clicked")
-                    path.append("LandingView")
-                }) {
-                    Text("Login")
+                if isSignUp {
+                    SecureField("", text: $confirmPassword)
+                        .placeholder(when: confirmPassword.isEmpty) {
+                            Text("Confirm Password")
+                        }
+                        .foregroundStyle(.white)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding(10)
+                        .background(Color.blue.opacity(0.7))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .frame(width: 300)
+                }
+                
+                Button(action: isSignUp ? signUp : login) {
+                    Text(isSignUp ? "Sign Up" : "Login")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(.white)
@@ -65,40 +79,70 @@ struct LoginView: View {
                 .background(Color.red)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 
+                Button(action: {
+                    isSignUp.toggle()
+                }) {
+                    Text(isSignUp ? "Already have an account? Login" : "Need an account? Sign up")
+                        .foregroundColor(.blue)
+                }
             }
             .padding()
             .background(Color.gray.opacity(0.2))
             .clipShape(RoundedRectangle(cornerRadius: 20))
             
             Spacer()
-            
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
         .navigationDestination(for: String.self) { destination in
             if destination == "LandingView" {
-                LandingView(
-                    path: $path,
-                    items: [ TripInput(
-                        origin: "Phoenix",
-                        destination: "Maldives",
-                        startDate: "Today", // Or use DateFormatter to convert Date to String
-                        endDate: "Tomorrow",
-                        travelerCount: 2, // Added default value
-                        budgetLevel: "Medium", // Added default value
-                        transportType: "Plane", // Added default value
-                        additionalInfo: "" // Empty by default
-                    ),
-                    TripInput(
-                        origin: "Phoenix",
-                        destination: "New York",
-                        startDate: "Today",
-                        endDate: "Tomorrow",
-                        travelerCount: 2,
-                        budgetLevel: "Medium",
-                        transportType: "Plane",
-                        additionalInfo: ""
-                    )
-                ])
+                LandingView(path: $path)
+            }
+        }
+    }
+    
+    private func login() {
+        guard !username.isEmpty, !password.isEmpty else {
+            errorMessage = "Please enter both email and password"
+            showError = true
+            return
+        }
+        
+        authService.signIn(email: username, password: password) { result in
+            switch result {
+            case .success:
+                path.append("LandingView")
+            case .failure(let error):
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
+    }
+    
+    private func signUp() {
+        guard !username.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
+            errorMessage = "Please fill in all fields"
+            showError = true
+            return
+        }
+        
+        guard password == confirmPassword else {
+            errorMessage = "Passwords don't match"
+            showError = true
+            return
+        }
+        
+        authService.signUp(email: username, password: password) { result in
+            switch result {
+            case .success:
+                path.append("LandingView")
+            case .failure(let error):
+                errorMessage = error.localizedDescription
+                showError = true
             }
         }
     }

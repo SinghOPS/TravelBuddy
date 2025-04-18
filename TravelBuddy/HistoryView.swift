@@ -9,51 +9,70 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    @Environment(\.modelContext) private var modelContext
     @Binding var path: NavigationPath
-    var items: [TripInput]
+    @EnvironmentObject var tripDataService: TripDataService
+    @State private var trips: [TripInput] = []
+    @State private var isLoading = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
-                /*ForEach(items) { item in
-                    NavigationLink(destination: TripDetailView(trip: item)) {
-                        TripRowView(trip: item)
+                if isLoading {
+                    ProgressView()
+                } else if trips.isEmpty {
+                    Text("No saved trips yet")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(trips) { trip in
+                        NavigationLink(destination: TripDetailView(
+                            viewModel: TripPlannerViewModel(),
+                            travelInput: trip
+                        )) {
+                            TripRowView(trip: trip)
+                        }
                     }
-                }*/
-                //.onDelete(perform: deleteItems)
+                    .onDelete(perform: deleteTrip)
+                }
             }
-            .listStyle(InsetGroupedListStyle())
+            .navigationTitle("Saved Trips")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: {}) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
+                EditButton()
             }
-            .navigationTitle("Recent Trips")
+            .onAppear {
+                loadTrips()
+            }
         }
     }
-
-    private func addItem() {
-        withAnimation {
-//            let newItem = Item(timestamp: Date())
-//            modelContext.insert(newItem)
+    
+    private func loadTrips() {
+        isLoading = true
+        tripDataService.fetchTrips { result in
+            isLoading = false
+            switch result {
+            case .success(let fetchedTrips):
+                trips = fetchedTrips
+            case .failure(let error):
+                print("Error loading trips: \(error.localizedDescription)")
+            }
         }
     }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            //for index in offsets {
-              //  modelContext.delete(items[index])
-            //}
+    
+    private func deleteTrip(at offsets: IndexSet) {
+        offsets.forEach { index in
+            let trip = trips[index]
+            tripDataService.deleteTrip(trip) { _ in
+                // Handle completion if needed
+            }
         }
+        trips.remove(atOffsets: offsets)
     }
 }
 
-/*#Preview {
-    HistoryView(path: .constant(NavigationPath()),items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
-}*/
+#Preview {
+    HistoryView(path: .constant(NavigationPath()))
+        .environmentObject(TripDataService())
+}
+
+//#Preview {
+//    HistoryView(path: .constant(NavigationPath()),items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
+//}

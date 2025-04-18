@@ -9,10 +9,18 @@ import SwiftUI
 
 
 struct ContentView: View {
+    @StateObject private var authService = AuthService()
     @State private var path = NavigationPath()
+    
     var body: some View {
         NavigationStack(path: $path) {
-            LoginView(path: $path)
+            if authService.isAuthenticated {
+                LandingView(path: $path)
+                    .environmentObject(authService)
+            } else {
+                LoginView(path: $path)
+                    .environmentObject(authService)
+            }
         }
     }
 }

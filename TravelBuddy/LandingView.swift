@@ -8,9 +8,11 @@
 import SwiftUI
 
 struct LandingView: View {
-    @Environment(\.modelContext) private var modelContext
     @Binding var path: NavigationPath
-    var items: [TripInput]
+    @State private var items: [TripInput] = []
+    @EnvironmentObject var tripDataService: TripDataService
+    @State private var isLoading = false
+    //var items: [TripInput]
     var prefilledTripLocations: [String] = ["New York", "Paris", "Rome", "Tokyo", "Barcelona"]
     var body: some View {
         VStack {
@@ -82,26 +84,7 @@ struct LandingView: View {
             }*/
             
             
-            NavigationLink(destination: HistoryView(path: $path, items: [TripInput(
-                origin: "Phoenix",
-                destination: "Maldives",
-                startDate: "Today", // Or use DateFormatter to convert Date to String
-                endDate: "Tomorrow",
-                travelerCount: 2, // Added default value
-                budgetLevel: "Medium", // Added default value
-                transportType: "Plane", // Added default value
-                additionalInfo: "" // Empty by default
-            ),
-            TripInput(
-                origin: "Phoenix",
-                destination: "New York",
-                startDate: "Today",
-                endDate: "Tomorrow",
-                travelerCount: 2,
-                budgetLevel: "Medium",
-                transportType: "Plane",
-                additionalInfo: ""
-            )])) {
+            NavigationLink(destination: HistoryView(path: $path)) {
                 Text("See All>")
                     .font(.title2)
                     .fontWeight(.heavy)
@@ -114,28 +97,43 @@ struct LandingView: View {
                 
             }
         }
+        .onAppear {
+            loadTrips()
+        }
+    }
+    private func loadTrips() {
+        isLoading = true
+        tripDataService.fetchTrips { result in
+            isLoading = false
+            switch result {
+            case .success(let trips):
+                items = trips
+            case .failure(let error):
+                print("Error loading trips: \(error.localizedDescription)")
+            }
+        }
     }
 }
 
-#Preview {
-    LandingView(path: .constant(NavigationPath()), items: [TripInput(
-        origin: "Phoenix",
-        destination: "Maldives",
-        startDate: "Today", // Or use DateFormatter to convert Date to String
-        endDate: "Tomorrow",
-        travelerCount: 2, // Added default value
-        budgetLevel: "Medium", // Added default value
-        transportType: "Plane", // Added default value
-        additionalInfo: "" // Empty by default
-    ),
-    TripInput(
-        origin: "Phoenix",
-        destination: "New York",
-        startDate: "Today",
-        endDate: "Tomorrow",
-        travelerCount: 2,
-        budgetLevel: "Medium",
-        transportType: "Plane",
-        additionalInfo: ""
-    )])
-}
+//#Preview {
+//    LandingView(path: .constant(NavigationPath()), items: [TripInput(
+//        origin: "Phoenix",
+//        destination: "Maldives",
+//        startDate: "Today", // Or use DateFormatter to convert Date to String
+//        endDate: "Tomorrow",
+//        travelerCount: 2, // Added default value
+//        budgetLevel: "Medium", // Added default value
+//        transportType: "Plane", // Added default value
+//        additionalInfo: "" // Empty by default
+//    ),
+//    TripInput(
+//        origin: "Phoenix",
+//        destination: "New York",
+//        startDate: "Today",
+//        endDate: "Tomorrow",
+//        travelerCount: 2,
+//        budgetLevel: "Medium",
+//        transportType: "Plane",
+//        additionalInfo: ""
+//    )])
+//}
