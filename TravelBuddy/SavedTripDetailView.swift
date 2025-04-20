@@ -1,76 +1,42 @@
 //
-//  TripDetailView.swift
+//  SavedTripDetailView.swift
 //  TravelBuddy
 //
-//  Created by Aarav Bodla on 3/30/25.
+//  Created by Aarav Bodla on 4/19/25.
 //
 
-import Foundation
 import SwiftUI
 
-struct TripDetailView: View {
-    @ObservedObject var viewModel: TripPlannerViewModel
-    let travelInput: TripInput
-    @State private var showErrorAlert = false
-    @State private var showSaveSuccess = false
-    @EnvironmentObject var tripDataService: TripDataService
-    @EnvironmentObject var authService: AuthService
-    @Environment(\.dismiss) var dismiss
+struct SavedTripDetailView: View {
+    let trip: TripInputWithItinerary
+    @State private var destinationImage: UIImage?
+    @State private var isLoadingImage = false
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Destination Header
-                    destinationHeader
-                        .onAppear {
-                            viewModel.fetchDestinationImage(destination: travelInput.destination)
-                        }
-                    
-                    // Trip Summary Card
-                    tripSummaryCard
-                    
-                    // Itinerary Section
-                    itinerarySection
-                }
-                .padding(.horizontal)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                // Destination Header
+                destinationHeader
+                
+                // Trip Summary Card
+                tripSummaryCard
+                
+                // Itinerary Section
+                itinerarySection
             }
-            .navigationTitle("Trip Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: saveTrip) {
-                        Text("Save Trip")
-                            .fontWeight(.bold)
-                    }
-                    .disabled(viewModel.parsedItinerary.isEmpty)
-                }
-            }
-            .background(Color(.systemGroupedBackground))
-            .alert("Plan Generation Failed",
-                   isPresented: $showErrorAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("We couldn't generate a plan. Please try again later.")
-            }
-            .alert("Trip Saved", isPresented: $showSaveSuccess) {
-                Button("OK", role: .cancel) { dismiss() }
-            } message: {
-                Text("Your trip has been saved successfully!")
-            }
-            .onAppear {
-                if viewModel.travelPlan.isEmpty && !viewModel.isLoading {
-                    showErrorAlert = true
-                }
-            }
+            .padding(.horizontal)
+        }
+        .navigationTitle("Trip Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .background(Color(.systemGroupedBackground))
+        .onAppear {
+            loadDestinationImage()
         }
     }
     
-    // MARK: - Subviews
-    
     private var destinationHeader: some View {
         ZStack(alignment: .bottomLeading) {
-            if let image = viewModel.destinationImage {
+            if let image = destinationImage {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
@@ -94,7 +60,7 @@ struct TripDetailView: View {
             .frame(height: 220)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(travelInput.destination)
+                Text(trip.destination)
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
@@ -119,17 +85,17 @@ struct TripDetailView: View {
                     .padding(.bottom, 4)
                 
                 infoRow(icon: "person.2.fill",
-                        text: "\(travelInput.travelerCount) traveler\(travelInput.travelerCount > 1 ? "s" : "")")
+                        text: "\(trip.travelerCount) traveler\(trip.travelerCount > 1 ? "s" : "")")
                 
                 infoRow(icon: "dollarsign.circle.fill",
-                        text: "\(travelInput.budgetLevel.capitalized) budget")
+                        text: "\(trip.budgetLevel.capitalized) budget")
                 
                 infoRow(icon: transportationIcon,
-                        text: travelInput.transportType.capitalized)
+                        text: trip.transportType.capitalized)
                 
-                if !travelInput.additionalInfo.isEmpty {
+                if !trip.additionalInfo.isEmpty {
                     infoRow(icon: "heart.fill",
-                            text: travelInput.additionalInfo)
+                            text: trip.additionalInfo)
                 }
             }
             Spacer()
@@ -146,22 +112,16 @@ struct TripDetailView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-            } else if !viewModel.parsedItinerary.isEmpty {
-                ForEach(viewModel.parsedItinerary) { day in
-                    dayCard(for: day)
-                }
-            } else if !viewModel.travelPlan.isEmpty {
-                Text(viewModel.travelPlan)
+            if trip.itinerary.isEmpty {
+                Text(trip.travelPlan)
                     .font(.body)
                     .padding()
                     .background(Color(.secondarySystemGroupedBackground))
                     .cornerRadius(12)
             } else {
-                Text("No itinerary generated yet")
-                    .foregroundColor(.secondary)
+                ForEach(trip.itinerary) { day in
+                    dayCard(for: day)
+                }
             }
         }
         .padding(.bottom)
@@ -247,42 +207,26 @@ struct TripDetailView: View {
         }
     }
     
-    // MARK: - Actions
-    
-    private func saveTrip() {
-        let tripWithItinerary = TripInputWithItinerary(
-            origin: travelInput.origin,
-            destination: travelInput.destination,
-            startDate: travelInput.startDate,
-            endDate: travelInput.endDate,
-            travelerCount: travelInput.travelerCount,
-            budgetLevel: travelInput.budgetLevel,
-            transportType: travelInput.transportType,
-            additionalInfo: travelInput.additionalInfo,
-            itinerary: viewModel.parsedItinerary,
-            travelPlan: viewModel.travelPlan,
-            destinationImageUrl: viewModel.destinationImageUrl
-        )
+    private func loadDestinationImage() {
+        guard let imageUrl = trip.destinationImageUrl else { return }
+        isLoadingImage = true
         
-        tripDataService.saveTrip(tripWithItinerary) { result in
-            switch result {
-            case .success:
-                showSaveSuccess = true
-            case .failure(let error):
-                showErrorAlert = true
-                print("Error saving trip: \(error.localizedDescription)")
+        URLSession.shared.dataTask(with: URL(string: imageUrl)!) { data, _, error in
+            DispatchQueue.main.async {
+                isLoadingImage = false
+                if let data = data, let image = UIImage(data: data) {
+                    destinationImage = image
+                }
             }
-        }
+        }.resume()
     }
     
-    // MARK: - Computed Properties
-    
     private var dateRange: String {
-        "\(travelInput.startDate) - \(travelInput.endDate)"
+        "\(trip.startDate) - \(trip.endDate)"
     }
     
     private var transportationIcon: String {
-        switch travelInput.transportType.lowercased() {
+        switch trip.transportType.lowercased() {
         case "plane": return "airplane"
         case "train": return "tram.fill"
         case "car": return "car.fill"
@@ -292,36 +236,29 @@ struct TripDetailView: View {
     }
 }
 
-// MARK: - Preview
-
 //#Preview {
-//    let mockViewModel = TripPlannerViewModel()
-//    mockViewModel.parsedItinerary = [
-//        TripPlannerViewModel.DayItinerary(
-//            dayNumber: "Day 1",
-//            date: "04/20",
-//            activities: [
-//                TripPlannerViewModel.Activity(time: "8:00AM", description: "Breakfast at Café Central", cost: "$15"),
-//                TripPlannerViewModel.Activity(time: "1:00PM", description: "Guided city tour", cost: "$25"),
-//                TripPlannerViewModel.Activity(time: "7:00PM", description: "Dinner at Seafood Grill", cost: "$45")
-//            ],
-//            tip: "Purchase museum tickets online to skip the lines"
-//        )
-//    ]
-//    
-//    return TripDetailView(
-//        viewModel: mockViewModel,
-//        travelInput: TripInput(
-//            origin: "New York",
-//            destination: "Paris",
-//            startDate: "20 Apr 2025",
-//            endDate: "25 Apr 2025",
-//            travelerCount: 2,
-//            budgetLevel: "Medium",
-//            transportType: "Plane",
-//            additionalInfo: "Interested in art and local cuisine"
-//        )
-//    )
-//    .environmentObject(TripDataService())
-//    .environmentObject(AuthService())
+//    SavedTripDetailView(trip: TripPlannerViewModel.TripInputWithItinerary(
+//        origin: "New York",
+//        destination: "Paris",
+//        startDate: "20 Apr 2025",
+//        endDate: "25 Apr 2025",
+//        travelerCount: 2,
+//        budgetLevel: "Medium",
+//        transportType: "Plane",
+//        additionalInfo: "Interested in art and local cuisine",
+//        itinerary: [
+//            DayItinerary(
+//                dayNumber: "Day 1",
+//                date: "04/20",
+//                activities: [
+//                    Activity(time: "8:00AM", description: "Breakfast at Café Central", cost: "$15"),
+//                    Activity(time: "1:00PM", description: "Guided city tour", cost: "$25"),
+//                    Activity(time: "7:00PM", description: "Dinner at Seafood Grill", cost: "$45")
+//                ],
+//                tip: "Purchase museum tickets online to skip the lines"
+//            )
+//        ],
+//        travelPlan: "Sample travel plan",
+//        destinationImageUrl: nil
+//    ))
 //}

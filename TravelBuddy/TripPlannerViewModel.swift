@@ -19,6 +19,7 @@ class TripPlannerViewModel: ObservableObject {
     @Published var destinationImage: UIImage?
     @Published var isLoadingImage = false
     @Published var imageError: String?
+    @Published var destinationImageUrl: String?
     private var cancellables = Set<AnyCancellable>()
     var lastInput: TripInput? = nil
 
@@ -28,20 +29,8 @@ class TripPlannerViewModel: ObservableObject {
     private let pixabayEndpoint = "https://pixabay.com/api/"
 
     // Data models for parsed itinerary
-    struct DayItinerary: Identifiable, Codable {
-        var id = UUID()
-        let dayNumber: String
-        let date: String
-        let activities: [Activity]
-        let tip: String
-    }
     
-    struct Activity: Identifiable, Codable {
-        var id = UUID()
-        let time: String
-        let description: String
-        let cost: String?
-    }
+    
 
     func fetchTravelPlan(for input: TripInput, completion: @escaping (Bool) -> Void) {
         isLoading = true
@@ -411,6 +400,7 @@ class TripPlannerViewModel: ObservableObject {
                 }
                 
                 self?.destinationImage = image
+                self?.destinationImageUrl = urlString
                 self?.imageError = nil
             }
         }.resume()
@@ -444,9 +434,8 @@ class TripPlannerViewModel: ObservableObject {
         let user: String
     }
 
-
 struct TripInput: Codable, Identifiable {
-    let id = UUID() // Add this for Firestore document IDs
+    let id = UUID()
     let origin: String
     let destination: String
     let startDate: String
@@ -455,4 +444,68 @@ struct TripInput: Codable, Identifiable {
     let budgetLevel: String
     let transportType: String
     let additionalInfo: String
+}
+
+// Add these structs inside the TripPlannerViewModel class
+struct DayItinerary: Identifiable, Codable {
+    var id = UUID()
+    let dayNumber: String
+    let date: String
+    let activities: [Activity]
+    let tip: String
+    
+    enum CodingKeys: String, CodingKey {
+        case dayNumber, date, activities, tip
+    }
+}
+
+struct Activity: Identifiable, Codable {
+    var id = UUID()
+    let time: String
+    let description: String
+    let cost: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case time, description, cost
+    }
+}
+
+// Add this outside the TripPlannerViewModel class
+struct TripInputWithItinerary: Codable, Identifiable {
+    let id: UUID
+    let origin: String
+    let destination: String
+    let startDate: String
+    let endDate: String
+    let travelerCount: Int
+    let budgetLevel: String
+    let transportType: String
+    let additionalInfo: String
+    let itinerary: [DayItinerary]
+    let travelPlan: String
+    let destinationImageUrl: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, origin, destination, startDate, endDate, travelerCount,
+             budgetLevel, transportType, additionalInfo, itinerary,
+             travelPlan, destinationImageUrl
+    }
+    
+    init(origin: String, destination: String, startDate: String, endDate: String,
+         travelerCount: Int, budgetLevel: String, transportType: String,
+         additionalInfo: String, itinerary: [DayItinerary],
+         travelPlan: String, destinationImageUrl: String?) {
+        self.id = UUID()
+        self.origin = origin
+        self.destination = destination
+        self.startDate = startDate
+        self.endDate = endDate
+        self.travelerCount = travelerCount
+        self.budgetLevel = budgetLevel
+        self.transportType = transportType
+        self.additionalInfo = additionalInfo
+        self.itinerary = itinerary
+        self.travelPlan = travelPlan
+        self.destinationImageUrl = destinationImageUrl
+    }
 }

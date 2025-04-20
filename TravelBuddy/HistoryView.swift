@@ -9,9 +9,9 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    @Binding var path: NavigationPath
     @EnvironmentObject var tripDataService: TripDataService
-    @State private var trips: [TripInput] = []
+    @EnvironmentObject var authService: AuthService
+    @State private var trips: [TripInputWithItinerary] = []
     @State private var isLoading = false
     
     var body: some View {
@@ -24,10 +24,7 @@ struct HistoryView: View {
                         .foregroundColor(.secondary)
                 } else {
                     ForEach(trips) { trip in
-                        NavigationLink(destination: TripDetailView(
-                            viewModel: TripPlannerViewModel(),
-                            travelInput: trip
-                        )) {
+                        NavigationLink(destination: SavedTripDetailView(trip: trip)) {
                             TripRowView(trip: trip)
                         }
                     }
@@ -36,7 +33,9 @@ struct HistoryView: View {
             }
             .navigationTitle("Saved Trips")
             .toolbar {
-                EditButton()
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    EditButton()
+                }
             }
             .onAppear {
                 loadTrips()
@@ -69,10 +68,7 @@ struct HistoryView: View {
 }
 
 #Preview {
-    HistoryView(path: .constant(NavigationPath()))
+    HistoryView()
         .environmentObject(TripDataService())
+        .environmentObject(AuthService())
 }
-
-//#Preview {
-//    HistoryView(path: .constant(NavigationPath()),items: [Trip(Destination: "Maldives", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 1000,image: "Default"), Trip(Destination: "New York", StartDate: Date(), EndDate: Date(timeIntervalSinceNow: 86400), totalSavings: 100,image: "Default")])
-//}

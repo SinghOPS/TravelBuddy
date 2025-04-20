@@ -8,114 +8,145 @@
 import SwiftUI
 
 struct LoginView: View {
-    @Binding var path: NavigationPath
-    @State private var username: String = ""
+    @EnvironmentObject var authService: AuthService
+    @State private var email: String = ""
     @State private var password: String = ""
     @State private var isSignUp = false
     @State private var confirmPassword = ""
-    @EnvironmentObject var authService: AuthService
     @State private var showError = false
     @State private var errorMessage = ""
     
     var body: some View {
-        VStack(spacing: 100) {
-            Image("logo")
-                .resizable()
-                .frame(width: 300, height: 130)
+        ZStack {
+            // White background
+            Color.white
+                .ignoresSafeArea()
             
-            VStack(spacing: 25) {
-                Text(isSignUp ? "Create Account" : "User Login")
-                    .font(.largeTitle)
-                    .fontWeight(.heavy)
+            // Main content
+            VStack(spacing: 30) {
+                // Logo
+                Image("logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 220)
+                    .padding(.top, 40)
                 
-                TextField("", text: $username)
-                    .placeholder(when: username.isEmpty) {
+                // Light grey form card
+                VStack(spacing: 20) {
+                    // Title
+                    Text(isSignUp ? "Create Account" : "Welcome Back")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                        .padding(.bottom, 5)
+                    
+                    // Email field
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Email Address")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        
+                        TextField("your@email.com", text: $email)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
                     }
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .background(Color.blue.opacity(0.7))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .frame(width: 300)
-                    .autocapitalization(.none)
-                    .keyboardType(.emailAddress)
-                
-                SecureField("", text: $password)
-                    .placeholder(when: password.isEmpty) {
+                    
+                    // Password field
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Password")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        
+                        SecureField("Enter password", text: $password)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
                     }
-                    .foregroundStyle(.white)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .padding(10)
-                    .background(Color.blue.opacity(0.7))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .frame(width: 300)
-                
-                if isSignUp {
-                    SecureField("", text: $confirmPassword)
-                        .placeholder(when: confirmPassword.isEmpty) {
+                    
+                    // Confirm password (sign up only)
+                    if isSignUp {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Confirm Password")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            
+                            SecureField("Confirm password", text: $confirmPassword)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .padding(10)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
                         }
-                        .foregroundStyle(.white)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .padding(10)
-                        .background(Color.blue.opacity(0.7))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .frame(width: 300)
+                    }
+                    
+                    // Action button with blue gradient
+                    Button(action: isSignUp ? signUp : login) {
+                        HStack {
+                            Text(isSignUp ? "Create Account" : "Sign In")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "arrow.right")
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(10)
+                    }
+                    .padding(.top, 10)
+                    
+                    // Toggle between login/signup
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isSignUp.toggle()
+                        }
+                    }) {
+                        Text(isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up")
+                            .font(.footnote)
+                            .foregroundColor(.blue)
+                    }
                 }
+                .padding(25)
+                .background(Color(.systemGray5))
+                .cornerRadius(15)
+                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+                .padding(.horizontal, 25)
                 
-                Button(action: isSignUp ? signUp : login) {
-                    Text(isSignUp ? "Sign Up" : "Login")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(width: 100)
-                }
-                .padding(10)
-                .background(Color.red)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                
-                Button(action: {
-                    isSignUp.toggle()
-                }) {
-                    Text(isSignUp ? "Already have an account? Login" : "Need an account? Sign up")
-                        .foregroundColor(.blue)
-                }
+                Spacer()
             }
-            .padding()
-            .background(Color.gray.opacity(0.2))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage)
         }
-        .navigationDestination(for: String.self) { destination in
-            if destination == "LandingView" {
-                LandingView(path: $path)
-            }
-        }
     }
-    
+  
     private func login() {
-        guard !username.isEmpty, !password.isEmpty else {
+        guard !email.isEmpty, !password.isEmpty else {
             errorMessage = "Please enter both email and password"
             showError = true
             return
         }
         
-        authService.signIn(email: username, password: password) { result in
+        authService.signIn(email: email, password: password) { result in
             switch result {
             case .success:
-                path.append("LandingView")
+                // Navigation is handled automatically by auth state change
+                break
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 showError = true
@@ -124,7 +155,7 @@ struct LoginView: View {
     }
     
     private func signUp() {
-        guard !username.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
+        guard !email.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
             errorMessage = "Please fill in all fields"
             showError = true
             return
@@ -136,10 +167,19 @@ struct LoginView: View {
             return
         }
         
-        authService.signUp(email: username, password: password) { result in
+        authService.signUp(email: email, password: password) { result in
             switch result {
             case .success:
-                path.append("LandingView")
+                // Show success message
+                errorMessage = "Account created! Please check your email to verify."
+                showError = true
+                
+                // Clear form
+                email = ""
+                password = ""
+                confirmPassword = ""
+                isSignUp = false
+                
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 showError = true
@@ -148,21 +188,7 @@ struct LoginView: View {
     }
 }
 
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
-    }
-}
-
-
-
 #Preview {
-    LoginView(path: .constant(NavigationPath()))
+    LoginView()
+        .environmentObject(AuthService())
 }

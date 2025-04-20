@@ -44,7 +44,11 @@ class AuthService: ObservableObject {
                 completion(.failure(error))
                 return
             }
+            // Success - but don't automatically sign in
             completion(.success(true))
+            
+//            // Optional: Send verification email
+//            Auth.auth().currentUser?.sendEmailVerification()
         }
     }
     

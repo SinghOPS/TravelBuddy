@@ -12,7 +12,7 @@ import FirebaseAuth
 class TripDataService: ObservableObject {
     private let db = Firestore.firestore()
     
-    func saveTrip(_ trip: TripInput, completion: @escaping (Result<Bool, Error>) -> Void) {
+    func saveTrip(_ trip: TripInputWithItinerary, completion: @escaping (Result<Bool, Error>) -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])))
             return
@@ -32,7 +32,7 @@ class TripDataService: ObservableObject {
         }
     }
     
-    func fetchTrips(completion: @escaping (Result<[TripInput], Error>) -> Void) {
+    func fetchTrips(completion: @escaping (Result<[TripInputWithItinerary], Error>) -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])))
             return
@@ -45,19 +45,19 @@ class TripDataService: ObservableObject {
             }
             
             let trips = snapshot?.documents.compactMap { document in
-                try? Firestore.Decoder().decode(TripInput.self, from: document.data())
+                try? Firestore.Decoder().decode(TripInputWithItinerary.self, from: document.data())
             } ?? []
             
             completion(.success(trips))
         }
     }
-    func deleteTrip(_ trip: TripInput, completion: @escaping (Result<Bool, Error>) -> Void) {
+    
+    func deleteTrip(_ trip: TripInputWithItinerary, completion: @escaping (Result<Bool, Error>) -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])))
             return
         }
         
-        // First find the document with matching trip data
         db.collection("users").document(userId).collection("trips")
             .whereField("id", isEqualTo: trip.id.uuidString)
             .getDocuments { snapshot, error in

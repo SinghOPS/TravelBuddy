@@ -9,9 +9,6 @@ import SwiftUI
 
 struct TripFormView: View {
     @StateObject var viewModel = TripPlannerViewModel()
-    @Binding var path: NavigationPath
-    @Binding var destination: String
-    
     @State private var startDate = Date()
     @State private var endDate = Date()
     @State private var budgetLevels = ["Low", "Medium", "High"]
@@ -20,28 +17,34 @@ struct TripFormView: View {
     @State private var selectedTransportationMode: String = "Plane"
     @State private var travelerCount: Int = 1
     @State private var additionalInfo: String = ""
-    @State private var localDestination: String = ""
     @State private var startLocation: String = ""
-
+    
+    // Destination is now a regular state property
+    @State private var destination: String
+    
     // Sheet & Alert
     @State private var showSheet = false
     @State private var showError = false
-
+    
+    init(destination: String = "") {
+        _destination = State(initialValue: destination)
+    }
+    
     var body: some View {
         Form {
             Section {
                 TextField("Start Origin", text: $startLocation)
-                TextField("Destination", text: $localDestination)
+                TextField("Destination", text: $destination)
                 DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
                 DatePicker("End Date", selection: $endDate, displayedComponents: .date)
                 Stepper("Traveler Count: \(travelerCount)", value: $travelerCount, in: 1...20)
-
+                
                 Picker("Budget Level", selection: $selectedBudgetLevel) {
                     ForEach(budgetLevels, id: \.self) { level in
                         Text(level)
                     }
                 }
-
+                
                 Picker("Transportation Mode", selection: $selectedTransportationMode) {
                     ForEach(transportationModes, id: \.self) { mode in
                         Text(mode)
@@ -49,12 +52,12 @@ struct TripFormView: View {
                 }
                 .pickerStyle(SegmentedPickerStyle())
             }
-
+            
             Section(header: Text("Additional Preferences")) {
                 TextEditor(text: $additionalInfo)
                     .frame(height: 220)
             }
-
+            
             Button(action: makePlan) {
                 HStack {
                     Spacer()
@@ -73,18 +76,10 @@ struct TripFormView: View {
                 .cornerRadius(10)
             }
         }
-        .onAppear {
-            if localDestination.isEmpty {
-                localDestination = destination
-            }
-        }
         .navigationTitle("Plan A New Trip")
         .sheet(isPresented: $showSheet) {
             if let input = viewModel.lastInput {
-                TripDetailView(
-                    viewModel: viewModel, travelInput: input
-                    //generatedPlan: viewModel.travelPlan
-                )
+                TripDetailView(viewModel: viewModel, travelInput: input)
             }
         }
         .alert("Failed to generate plan", isPresented: $showError) {
@@ -93,14 +88,14 @@ struct TripFormView: View {
             Text("Please check your connection or try again.")
         }
     }
-
+    
     func makePlan() {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
-
+        
         let input = TripInput(
             origin: startLocation,
-            destination: localDestination,
+            destination: destination,
             startDate: formatter.string(from: startDate),
             endDate: formatter.string(from: endDate),
             travelerCount: travelerCount,
@@ -108,7 +103,7 @@ struct TripFormView: View {
             transportType: selectedTransportationMode,
             additionalInfo: additionalInfo
         )
-
+        
         viewModel.fetchTravelPlan(for: input) { success in
             if success {
                 showSheet = true
@@ -120,5 +115,8 @@ struct TripFormView: View {
 }
 
 #Preview {
-    TripFormView(path: .constant(NavigationPath()), destination: .constant(""))
+    NavigationStack {
+        TripFormView()
+    }
+    .environmentObject(TripDataService())
 }

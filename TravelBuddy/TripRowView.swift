@@ -8,48 +8,56 @@
 import SwiftUI
 
 struct TripRowView: View {
-    var trip: TripInput
+    var trip: TripInputWithItinerary
     
     var body: some View {
         HStack {
-            Spacer()
-            Image("Default") // Display the associated image
+            // Airplane icon
+            Image(systemName: "airplane")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 50, height: 50)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            Spacer()
-            VStack(alignment: .leading) {
+                .frame(width: 20, height: 20)
+                .foregroundColor(.blue)
+                .padding(.trailing, 10)
+            
+            VStack(alignment: .leading, spacing: 4) {
                 Text(trip.destination)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.black)
                 
-                // Format dates to show only day and month
                 Text("\(trip.startDate) - \(trip.endDate)")
                     .font(.subheadline)
-                    .foregroundColor(.white)
+                    .foregroundColor(.gray)
             }
             
-            Divider()
-                .frame(height: 50)
-                .background(Color.white)
             Spacer()
+            
+            // Calendar icon instead of chevron
+            Image(systemName: "calendar")
+                .foregroundColor(.blue.opacity(0.7))
         }
-        .padding(.vertical, 6)
-        .foregroundStyle(Color.white)
-        .background(Color.black)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(12)
+        .cornerRadius(12)
+        .shadow(color: .blue.opacity(0.2), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
+        .padding(.vertical, 4)
+        
     }
 }
 
 #Preview {
-    TripRowView(trip: .init(origin: "Phoenix",
-                            destination: "New York",
-                            startDate: "Today",
-                            endDate: "Tomorrow",
-                            travelerCount: 2,
-                            budgetLevel: "Medium",
-                            transportType: "Plane",
-                            additionalInfo: ""))
+    TripRowView(trip: TripInputWithItinerary(
+        origin: "Phoenix",
+        destination: "New York",
+        startDate: "Today",
+        endDate: "Tomorrow",
+        travelerCount: 2,
+        budgetLevel: "Medium",
+        transportType: "Plane",
+        additionalInfo: "",
+        itinerary: [],
+        travelPlan: "",
+        destinationImageUrl: nil
+    ))
 }
